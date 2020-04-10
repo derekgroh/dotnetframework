@@ -19,17 +19,49 @@
 # limitations under the License.
 #
 
-actions :install
-default_action :install
+property :version, String, name_property: true # The full .NET version: 4.0.30319, 4.5.51641 etc
+property :source, String, required: true # The offline installer package URL
+property :package_name, String, required: true # The installed MSI package name
+property :checksum, String # The source ISO SHA256 checksum
 
-# The full .NET version: 4.0.30319, 4.5.51641 etc
-attribute :version, kind_of: String, name_attribute: true
+include Windows::Helper
 
-# The offline installer package URL
-attribute :source, kind_of: String, required: true
+def whyrun_supported?
+  true
+end
 
-# The installed MSI package name
-attribute :package_name, kind_of: String, required: true
+# use_inline_resources
 
-# The source ISO SHA256 checksum
-attribute :checksum, kind_of: String
+action :install do
+  if dotnet_version_or_higher_is_installed?(new_resource.version)
+    Chef::Log.info(
+      ".NET Framework #{new_resource.version} or higher is already installed"
+    )
+  else
+    converge_by("Installing .NET Framework #{new_resource.version}") do
+      setup_exe = ::File.basename(new_resource.source)
+      setup_log_path =
+        win_friendly_path(::File.join(::Dir.tmpdir, "#{setup_exe}.html"))
+
+      windows_package new_resource.package_name do # ~FC009
+        source new_resource.source
+        checksum new_resource.checksum
+        installer_type :custom
+        options "/q /norestart /log \"#{setup_log_path}\""
+        action :install
+        returns [0, 3010]
+      end
+    end
+  end
+end
+
+def dotnet_version_or_higher_is_installed?(expected_version)
+  reg_path = 'SOFTWARE\Microsoft\NET Framework Setup\NDP\v4\Full'
+  require 'win32/registry'
+  ::Win32::Registry::HKEY_LOCAL_MACHINE.open(reg_path) do |reg|
+    reg_version = reg['Version']
+    return Gem::Version.new(reg_version) >= Gem::Version.new(expected_version)
+  end
+rescue ::Win32::Registry::Error
+  false
+end
