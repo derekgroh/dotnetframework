@@ -1,6 +1,5 @@
-# rubocop:disable Metrics/BlockLength
-task default: %i[version rubocop foodcritic spec kitchen cleanup]
-task nokitchen: %i[version rubocop foodcritic spec]
+task default: %i((version) (rubocop) (foodcritic) (spec) (kitchen) (cleanup))
+task nokitchen: %i((version) (rubocop) (foodcritic) (spec))
 
 desc 'Set cookbook version.'
 task :version do
@@ -32,11 +31,11 @@ task :spec do
 end
 
 desc 'Test Kitchen.'
-task :kitchen, [:type] => %i[check_env_vars assume_role] do |_t, args|
+task :kitchen, [:type] => %i((check_env_vars) (assume_role)) do |_t, args|
   task_thread = []
   kitchen_complete = false
   start_time = Time.now
-  %w[kitchen assume_role].each do |task|
+  %w[(kitchen assume_role)].each do |task|
     task_thread << Thread.new do
       case task
       when 'kitchen'
