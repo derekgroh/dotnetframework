@@ -2,6 +2,12 @@
 
 This file is used to list changes made in each version of dotnetframework.
 
+## 3.0.0
+- update cookbook to Chef14 custom resources
+- unit and integration tests
+- add kitchen testing
+- add delivery framework and github integration
+
 ## 2.0.0
 - ChefDK 2.5.3 rubocop and foodcritic updates
 - Remove `node.set` for Chef 13 compatiblity
